@@ -7,7 +7,7 @@ document.getElementById('city-search-form').addEventListener('submit', function 
 function fetchWeatherData (city) {
     const apiKey = '46953422f2ae7989db1c1b39868e0037';
     const geocodingApiUrl = 'https://api.openweathermap.org/geo/1.0/direct';
-    const apiUrl = 'https://api.openweathermap.org/data/2.5/forecast/daily';
+    const apiUrl = 'https://api.openweathermap.org/data/2.5/forecast';
 
     fetch(`${geocodingApiUrl}?q=${city}&appid=${apiKey}`)
         .then(response => response.json())
@@ -18,7 +18,7 @@ function fetchWeatherData (city) {
                 .then(response => response.json())
                 .then(weatherData => {
                     updateWeatherUI(weatherData, city);
-                    addToSearchHistory(city);
+                    addToSearchHistory(city, weatherData);
                     console.log(weatherData)
                 })
                 .catch(error => {
@@ -47,8 +47,19 @@ function updateWeatherUI(data) {
             card.appendChild(cityName);
         }
 
+        const date = new Date(dt_txt);
+        const options = {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,
+        };
+        const formattedDate = date.toLocaleDateString('en-US', options);
+
         const dateElement = document.createElement('p');
-        dateElement.textContent = dt_txt;
+        dateElement.textContent = formattedDate;
         card.appendChild(dateElement);
 
         const weatherIcon = document.createElement('img');
@@ -73,27 +84,33 @@ function updateWeatherUI(data) {
 }
 
 
-function addToSearchHistory(city) {
+function addToSearchHistory(city, weatherData) {
     const searchHistory = document.getElementById('search-history');
-    const listItem = document.createElement('li');
-    listItem.textContent = city;
-    listItem.classList.add('search-history-item');
-    searchHistory.appendChild(listItem);
+    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || {};
 
-
-    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || [];
-    searchHistoryItems.push(city);
+    searchHistoryItems[city] = weatherData;
+    
     localStorage.setItem('searchHistory', JSON.stringify(searchHistoryItems));
+    
+
+    searchHistory.innerHTML = '';
+
+    for (const cityName in searchHistoryItems) {
+        if (searchHistoryItems.hasOwnProperty(cityName)) {
+            const button = document.createElement('button');
+            button.textContent = cityName;
+            button.classList.add('search-history-button');
+            button.addEventListener('click', () => updateWeatherUI(searchHistoryItems[cityName], cityName));
+            searchHistory.appendChild(button);
+        }
+    }
 }
 
 
 window.addEventListener('load', function () {
-    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || [];
-    const searchHistory = document.getElementById('search-history');
-    searchHistoryItems.forEach(city => {
-        const listItem = document.createElement('li');
-        listItem.textContent = city;
-        listItem.classList.add('search-history-item');
-        searchHistory.appendChild(listItem);
-    });
+    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || {};
+    
+    if (Object.keys(searchHistoryItems).length > 0) {
+        addToSearchHistory(searchHistoryItems);
+    }
 });
