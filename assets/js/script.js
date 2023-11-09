@@ -4,14 +4,14 @@ document.getElementById('city-search-form').addEventListener('submit', function 
     fetchWeatherData(city);
 });
 
-function fetchWeatherData (city) {
+function fetchWeatherData(city) {
     const apiKey = '46953422f2ae7989db1c1b39868e0037';
     const geocodingApiUrl = 'https://api.openweathermap.org/geo/1.0/direct';
     const apiUrl = 'https://api.openweathermap.org/data/2.5/forecast';
 
     fetch(`${geocodingApiUrl}?q=${city}&appid=${apiKey}`)
         .then(response => response.json())
-        .then((response) => {
+        .then(response => {
             const { lat, lon } = response[0];
 
             fetch(`${apiUrl}?lat=${lat}&lon=${lon}&units=imperial&cnt=5&appid=${apiKey}`)
@@ -19,7 +19,7 @@ function fetchWeatherData (city) {
                 .then(weatherData => {
                     updateWeatherUI(weatherData, city);
                     addToSearchHistory(city, weatherData);
-                    console.log(weatherData)
+                    console.log(weatherData);
                 })
                 .catch(error => {
                     console.error('Error fetching weather data: ', error);
@@ -30,13 +30,12 @@ function fetchWeatherData (city) {
         });
 }
 
-function updateWeatherUI(data) {
+function updateWeatherUI(data, city) {
     const weatherInfo = document.getElementById('weather-info');
     weatherInfo.innerHTML = '';
 
     for (let i = 0; i < data.list.length; i++) {
         const { dt_txt, main, weather, wind } = data.list[i];
-        const city = data.city.name;
 
         const card = document.createElement('div');
         card.classList.add('weather-card');
@@ -83,15 +82,13 @@ function updateWeatherUI(data) {
     }
 }
 
-
 function addToSearchHistory(city, weatherData) {
     const searchHistory = document.getElementById('search-history');
     const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || {};
 
     searchHistoryItems[city] = weatherData;
-    
+
     localStorage.setItem('searchHistory', JSON.stringify(searchHistoryItems));
-    
 
     searchHistory.innerHTML = '';
 
@@ -106,11 +103,10 @@ function addToSearchHistory(city, weatherData) {
     }
 }
 
-
 window.addEventListener('load', function () {
-    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory')) || {};
-    
-    if (Object.keys(searchHistoryItems).length > 0) {
+    const searchHistoryItems = JSON.parse(localStorage.getItem('searchHistory'));
+
+    if (searchHistoryItems && Object.keys(searchHistoryItems).length > 0) {
         addToSearchHistory(searchHistoryItems);
     }
 });
